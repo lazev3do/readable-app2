@@ -1,10 +1,99 @@
-const API_ID = process.env.REACT_APP_API_ID
-const APP_KEY = process.env.REACT_APP_APP_KEY
+const api = "http://localhost:5001"
 
-export function fetchRecipes (food = '') {
-  food = food.trim()
 
-  return fetch(`https://api.edamam.com/search?q=${food}&app_id=${API_ID}&app_key=${APP_KEY}`)
-    .then((res) => res.json())
-    .then(({ hits }) => hits.map(({ recipe }) => recipe))
+// Generate a unique token for storing your bookshelf data on the backend server.
+let token = localStorage.token
+if (!token)
+  token = localStorage.token = Math.random().toString(36).substr(-8)
+
+const headers = {
+  'Accept': 'application/json',
+  'Authorization': token
 }
+
+export const getCategories = () =>
+  fetch(`${api}/categories`, { headers })
+    .then(res => res.json())
+    .then(data => data.categories)
+    .catch(e => e)
+
+    export const getPosts = (category) => {
+      const url = category && category.length? `${api}/${category}/posts`:`${api}/posts`;
+      return fetch(url, { headers })
+        .then(res => res.json())
+        .then(data => data)
+        .catch(e => e)
+      }
+
+      ///posts/:id/comments
+      export const getComments = (postId) => {
+        return fetch(`${api}/posts/${postId}/comments`, { headers })
+          .then(res => res.json())
+          .then(data => data)
+          .catch(e => e)
+        }
+
+      export const postVote = (postId, voteDirection) =>
+        fetch(`${api}/posts/${postId}`, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ option:voteDirection })
+        }).then(res => res.json())
+          .then(data => data)
+
+    export const serverSavePost = (values) =>{
+    let url = `${api}/posts`;
+    let method="POST";
+    if(values.existing_post)
+    {
+      url+=`/${values.id}`;
+      method="PUT";
+    }
+    return (
+    fetch(url, {
+      method,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(values)
+    }).then(res => res.json())
+      .then(data => data))
+    }
+
+
+
+export const get = (bookId) =>
+  fetch(`${api}/books/${bookId}`, { headers })
+    .then(res => res.json())
+    .then(data => data.book)
+
+export const getAll = () =>
+  fetch(`${api}/books`, { headers })
+    .then(res => res.json())
+    .then(data => data.books)
+    .catch(e => e)
+
+export const update = (book, shelf) =>
+  fetch(`${api}/books/${book.id}`, {
+    method: 'PUT',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ shelf })
+  }).then(res => res.json())
+
+export const search = (query, maxResults) =>
+  fetch(`${api}/search`, {
+    method: 'POST',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ query, maxResults })
+  }).then(res => res.json())
+    .then(data => data.books)

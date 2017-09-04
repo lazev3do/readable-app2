@@ -1,4 +1,5 @@
-import {ADD_RECIPE,REMOVE_FROM_CALENDAR,RECEIVE_FOOD} from '../actions'
+import {ADD_RECIPE,REMOVE_FROM_CALENDAR,RECEIVE_FOOD,FETCHING_CATEGORIES,RECEIVED_CATEGORIES,RECEIVED_POSTS,
+  FETCHING_POSTS,VOTING,VOTED,RECEIVED_COMMENTS,ORDER_BY,ORDER_BY_COMMENTS,EDIT_MODE,SAVING_POST,SAVED_POST} from '../actions'
 import {combineReducers} from 'redux';
 
 const initialCalendarState = {
@@ -79,8 +80,108 @@ const calendar = (state = initialCalendarState,action)=>{
       return state;
   }
 }
+
+const categories = (state = {isFetchingCategories:false,entries:[],selected_category:''},action) =>{
+  switch (action.type){
+    case FETCHING_CATEGORIES:
+      return {
+        ...state,
+        isFetchingCategories:true
+      }
+      break;
+    case RECEIVED_CATEGORIES:
+      return {
+        ...state,
+        isFetchingCategories:false,
+        entries:action.entries.concat([{path:'',name:'All'}])
+      }
+    default:
+      return state;
+  }
+}
+
+const posts = (state = {posts : []},action) => {
+  switch (action.type) {
+    case FETCHING_POSTS:
+      return {
+        ...state,
+        isFetchingPosts:true
+      }
+      break;
+    case RECEIVED_POSTS:
+      return {
+        ...state,
+        isFetchingPosts:false,
+        posts:action.posts
+      }
+    case VOTING:
+      return{
+        ...state,
+        isVoting:true
+      }
+    case VOTED:
+      return {
+        ...state,
+        posts:state.posts.map((elem)=>action.post && action.post.id == elem.id ? action.post:elem),
+        isVoting:false
+      }
+    case ORDER_BY:
+      return {
+        ...state,
+        orderBy:action.orderBy
+      }
+      case ORDER_BY_COMMENTS:
+      return {
+        ...state,
+        orderByComments:action.orderBy
+      }
+      case EDIT_MODE:
+        return {
+          ...state,
+          editMode:action.editMode
+        }
+    case SAVING_POST:
+      return {
+        ...state,
+        savingPost:true
+      }
+      case SAVED_POST:
+      let statePosts = state.posts;
+      let toAdd = true;
+      statePosts.forEach((elem,index)=>{
+        if(elem.id==action.post.id)
+          statePosts.splice(index);
+      });
+      statePosts=statePosts.concat(action.post);
+        return {
+          ...state,
+          savingPost:false,
+          editMode:false,
+          posts:statePosts,
+          justSavedPost:action.post
+        };
+    case RECEIVED_COMMENTS:
+      const commentsByPostID = action.comments.reduce((holder,element)=>(
+        {
+          [element.parentId]:holder[element.parentId]?holder[element.parentId].concat(element):[element]
+        }
+      ),{});
+      return {
+        ...state,
+        comments:{
+          ...state.comments,
+          ...commentsByPostID
+        }
+      }
+    default:
+      return state;
+  }
+}
+
 export default combineReducers({
   calendar,
-  food
+  food,
+  categories,
+  posts
 }
 );
