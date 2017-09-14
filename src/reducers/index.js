@@ -1,5 +1,6 @@
 import {ADD_RECIPE,REMOVE_FROM_CALENDAR,RECEIVE_FOOD,FETCHING_CATEGORIES,RECEIVED_CATEGORIES,RECEIVED_POSTS,
-  FETCHING_POSTS,VOTING,VOTED,RECEIVED_COMMENTS,ORDER_BY,ORDER_BY_COMMENTS,EDIT_MODE,SAVING_POST,SAVED_POST} from '../actions'
+  FETCHING_POSTS,VOTING,VOTED,RECEIVED_COMMENTS,ORDER_BY,ORDER_BY_COMMENTS,EDIT_MODE,SAVING_POST,SAVED_POST,
+SAVING_COMMENT,SAVED_COMMENT,DELETED_POST,JUST_SAVED_FALSE} from '../actions'
 import {combineReducers} from 'redux';
 
 const initialCalendarState = {
@@ -145,12 +146,24 @@ const posts = (state = {posts : []},action) => {
         ...state,
         savingPost:true
       }
+    case SAVING_COMMENT:
+      return {
+        ...state,
+        savingComment:true
+      }
+      case JUST_SAVED_FALSE:
+        return {
+          ...state,
+          justSavedPost:null
+        }
       case SAVED_POST:
       let statePosts = state.posts;
-      let toAdd = true;
       statePosts.forEach((elem,index)=>{
         if(elem.id==action.post.id)
+        {
           statePosts.splice(index);
+          return false;
+        }
       });
       statePosts=statePosts.concat(action.post);
         return {
@@ -160,6 +173,33 @@ const posts = (state = {posts : []},action) => {
           posts:statePosts,
           justSavedPost:action.post
         };
+        case DELETED_POST:
+          return {
+            ...state,
+            savingPost:false,
+            editMode:false,
+            posts:state.posts.map(element=>element.id==action.postId?{...element,deleted:true}:element),
+          };
+    case SAVED_COMMENT:
+      let statePostComments = (state.comments && state.comments[action.comment.parentId]) || [];
+      statePostComments.forEach((elem,index)=>{
+        if(elem.id==action.comment.id)
+        {
+          statePostComments.splice(index);
+          return false;
+        }
+      });
+      statePostComments = statePostComments.concat(action.comment);
+      return {
+        ...state,
+        savingComment:false,
+        comments:{
+          ...state.comments,
+          [action.comment.parentId]:statePostComments
+        }
+
+      }
+
     case RECEIVED_COMMENTS:
       const commentsByPostID = action.comments.reduce((holder,element)=>(
         {

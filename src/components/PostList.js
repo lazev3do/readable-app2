@@ -29,7 +29,7 @@ class PostList extends Component {
         </label>
         <Link to={`/posts/new_post`}>Add Post</Link>
         <ul>
-          {posts.sort(sortBy(postsOrderBy)).map(post=>(
+          {posts.filter((element,index)=>!element.deleted).sort(sortBy(postsOrderBy)).map(post=>(
             <li key={`post_${post.id}`}>
               <Post post_id={post.id} showlistview={true}/>
             </li>

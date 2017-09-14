@@ -52,6 +52,28 @@ export const getCategories = () =>
       url+=`/${values.id}`;
       method="PUT";
     }
+    if(values.action=="deleteAction")
+      method="DELETE";
+    return (
+    fetch(url, {
+      method,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(values)
+    }).then(res => values.action!="deleteAction"?res.json():{id:values.id})
+      .then(data => data))
+    }
+
+    export const serverSaveComment = (values) =>{
+    let url = `${api}/comments`;
+    let method="POST";
+    if(values.existing_comment)
+    {
+      url+=`/${values.id}`;
+      method="PUT";
+    }
     return (
     fetch(url, {
       method,

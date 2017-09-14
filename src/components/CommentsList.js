@@ -5,11 +5,12 @@ import Loading from 'react-loading'
 import {Link} from 'react-router-dom'
 import {orderByComments} from '../actions'
 import sortBy from 'sort-by'
+import CommentForm from './CommentForm'
 
 class CommentsList extends Component {
 
   render(){
-    const {comments,dispatch,commentsOrderBy} = this.props;
+    const {comments,dispatch,commentsOrderBy,editAddComment,commentToEdit,postId} = this.props;
     return (
       <div>
       <label>
@@ -20,9 +21,16 @@ class CommentsList extends Component {
       </label>
       <ul>
       {comments.sort(sortBy(commentsOrderBy)).map((element,index)=>(
-        <li key={element.id}>
-          <span key={`body_${element.id}`}>{element.body}</span>
-        </li>
+          <li key={element.id}>
+            {commentToEdit!==null && commentToEdit==element.id ?
+            <CommentForm postId={postId} key={element.id} comment={element} />
+            :
+            <span key={`body_${element.id}`}>{element.body}</span>
+          }
+            <button>Edit Comment</button>
+          </li>
+
+
       ))}
       </ul>
       </div>
@@ -31,9 +39,10 @@ class CommentsList extends Component {
 
 }
 
-const mapStateToProps = (state,ownProps) => ({
-  comments:state.posts.comments[ownProps.postId],
-  commentsOrderBy:state.posts.commentsOrderBy
+const mapStateToProps = ({posts},ownProps) => ({
+  comments:posts.comments[ownProps.postId],
+  commentsOrderBy:posts.commentsOrderBy,
+  commentToEdit:posts.commentToEdit || null
 })
 
 export default connect(mapStateToProps)(CommentsList);

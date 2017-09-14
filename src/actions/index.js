@@ -1,4 +1,4 @@
-import {getCategories,getPosts,postVote,getComments,serverSavePost} from '../utils/api'
+import {getCategories,getPosts,postVote,getComments,serverSavePost,serverSaveComment} from '../utils/api'
 export const ADD_RECIPE = 'ADD_RECIPE'
 export const REMOVE_FROM_CALENDAR = 'REMOVE_FROM_CALENDAR'
 export const RECEIVE_FOOD = 'RECEIVE_FOOD'
@@ -14,6 +14,11 @@ export const ORDER_BY_COMMENTS = "ORDER_BY_COMMENTS";
 export const EDIT_MODE = "EDIT_MODE";
 export const SAVING_POST = "SAVING_POST"
 export const SAVED_POST = "SAVED_POST";
+export const SAVING_COMMENT = "SAVING_COMMENT";
+export const SAVED_COMMENT = "SAVED_COMMENT";
+export const DELETED_POST = "DELETED_POST";
+export const JUST_SAVED_FALSE = "JUST_SAVED_FALSE";
+
 
 
 
@@ -45,9 +50,34 @@ const savedPost = (post) => ({
   post
 })
 
+const deletedPost = (postId) => ({
+  type:DELETED_POST,
+  postId
+})
+
 export const savePost = (values) => dispatch => {
     dispatch(savingPost());
-    serverSavePost(values).then((post)=>dispatch(savedPost(post)));
+    serverSavePost(values).then(
+      (post)=>{
+        if(values.action=="deleteAction")
+          dispatch(deletedPost(post.id));
+        else
+          dispatch(savedPost(post));
+        })
+}
+
+const savingComment = () => ({
+  type: SAVING_COMMENT
+})
+
+const savedComment = (comment) => ({
+  type: SAVED_COMMENT,
+  comment
+})
+
+export const saveComment = (values) => dispatch => {
+    dispatch(savingComment());
+    serverSaveComment(values).then((comment)=>dispatch(savedComment(comment)));
 }
 
 export const receiveFood = food => ({
@@ -67,6 +97,10 @@ export const receivedCategories = (entries) => ({
 export const fetchingPosts = () => ({
   type:FETCHING_POSTS
 })
+
+export const justSavedFalse = () => ({
+  type:JUST_SAVED_FALSE
+});
 
 export const receivedPosts = (posts) => ({
   type:RECEIVED_POSTS,

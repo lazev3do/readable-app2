@@ -6,8 +6,9 @@ import {Link} from 'react-router-dom'
 import Voting from './Voting'
 import {fetchComments} from '../actions'
 import CommentsList from './CommentsList'
+import CommentForm from './CommentForm'
 import serializeForm from 'form-serialize'
-import {editMode,fetchCategories,savePost} from '../actions'
+import {editMode,fetchCategories,savePost,justSavedFalse} from '../actions'
 import {guid} from '../utils/helper'
 import { Route, withRouter } from 'react-router-dom';
 
@@ -37,7 +38,10 @@ class Post extends Component {
 
   componentWillReceiveProps(newProps) {
     if(newProps.justSavedPost && this.props.post_id && this.props.post_id=="new_post")
+    {
       this.props.history.push(`/${newProps.justSavedPost.category}/${newProps.justSavedPost.id}`);
+      this.props.dispatch(justSavedFalse());
+    }
     if(this.props.post==undefined && newProps.post!==undefined)
       this.props.dispatch(fetchComments(newProps.post.id));
   }
@@ -48,11 +52,12 @@ class Post extends Component {
   }
 
   render () {
-    const {post,showlistview,comments,editMode,categories,dispatch,savingPost} = this.props;
-    console.log("EditMode: "+editMode)
+    const {post,showlistview,comments,editMode,categories,dispatch,savingPost,post_id,isFetchingPosts,link_category} = this.props;
+    console.log("Post:");
+    console.log(post);
     return (
       <div>
-        {editMode ?
+        {editMode && (post === undefined || !post.deleted) ?
           <div>
             <form noValidate onSubmit={this.handleSubmit}>
               <input type="text" required name="title" placeholder="Title" defaultValue={(post && post.title)|| ""} />
@@ -67,33 +72,42 @@ class Post extends Component {
               {post && post.id ? <input type="hidden" defaultValue={post.id} name="id" />:""}
               {savingPost?
                 <Loading delay={200} type='spin' color='#222' className='loading' />
-                :  <input formNoValidate type="Submit" defaultValue="Save" />
+                :
+                <div>
+                  <input type="hidden" defaultValue="saveAction" name="action" ref={(input)=>this.actionInput=input} />
+                  <input formNoValidate type="Submit" defaultValue="Save" onClick={()=>{this.actionInput.value="saveAction";return true;}} />
+                  {post !== undefined && <input formNoValidate type="Submit" defaultValue="Delete" onClick={()=>{this.actionInput.value="deleteAction";return true;}} />}
+                </div>
               }
             </form>
           </div>
           :
 
-      post !== undefined ?
+      post !== undefined && !post.deleted ?
        showlistview &&
         <div>
           <Link to={`/${post.category}/${post.id}`}><p>{post.title}</p></Link>
-          {comments && comments[post.id] &&
+          {comments && comments[post.id] ?
           <span>{comments[post.id].length} comments</span>
+          :<span>0 comments</span>
           }
       </div>
       ||
+      /** post view **/
       <div>
         <Link to={`/${post.category}`}>{post.category}</Link>
-        <span>{post.title}</span><Link onClick={this.editModeTrue} to={`/${post.category}/${post.id}`}>Edit</Link>
+        <span>{post.title}</span><Link to={`/${post.category}/${post.id}?edit=true`}>Edit</Link>
         <Voting post = {post} />
+        <CommentForm postId={post.id}/>
         {comments && comments[post.id] &&
-        <div>
+        <div className="comments-list">
           <span>{comments[post.id].length} comments</span>
           <CommentsList postId={post.id}/>
         </div>
         }
       </div>
-      : <Loading delay={200} type='spin' color='#222' className='loading' />
+      : (isFetchingPosts ? <Loading delay={200} type='spin' color='#222' className='loading' />:
+      <span>Post not found or deleted <Link to={`/${link_category}`}>go back</Link></span>)
       }
       </div>
     )
@@ -102,9 +116,10 @@ class Post extends Component {
 
 function mapStateToProps({posts,categories,savingPost=false},ownProps){
   const post = posts.posts.filter(elem=>elem.id==ownProps.post_id);
+  const editMode = (ownProps.location.search && ownProps.location.search.indexOf("edit=true")>-1) || ownProps.post_id=="new_post";
   if(post.length>0)
-    return {post:post[0],comments:posts.comments,categories:categories.entries,editMode:posts.editMode,savingPost,justSavedPost:posts.justSavedPost};
-  return {editMode:posts.editMode,categories:categories.entries,savingPost,justSavedPost:posts.justSavedPost};
+    return {post:post[0],comments:posts.comments,categories:categories.entries,editMode,savingPost,justSavedPost:posts.justSavedPost};
+  return {editMode:posts.editMode,categories:categories.entries,savingPost,justSavedPost:posts.justSavedPost,isFetchingPosts:posts.isFetchingPosts};
 }
 
 export default withRouter(connect(mapStateToProps)(Post));
