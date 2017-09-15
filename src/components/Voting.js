@@ -4,6 +4,10 @@ import {connect} from 'react-redux';
 import Loading from 'react-loading'
 import {Link} from 'react-router-dom'
 import {vote} from '../actions'
+import MdKeyboardArrowUp from 'react-icons/lib/md/keyboard-arrow-up'
+import MdKeyboardArrowDown from 'react-icons/lib/md/keyboard-arrow-down'
+
+
 
 /*
 **
@@ -15,12 +19,12 @@ class Voting extends Component {
   }
 
   render () {
-    const {post,isVoting,dispatch} = this.props;
+    const {postOrComment,isVoting,dispatch,type} = this.props;
     return (
       <div>
-        <span>{post.voteScore}</span>
-        <button onClick={(event)=>dispatch(vote(post.id,'upVote'))}>+</button>
-        <button  onClick={(event)=>dispatch(vote(post.id,'downVote'))}>-</button>
+        <span>{postOrComment.voteScore} (vote score)</span>
+        <button className="vote-button btn btn-outline-success btn-sm" onClick={(event)=>dispatch(vote(postOrComment.id,'upVote',type))}><MdKeyboardArrowUp/></button>
+        <button className="vote-button btn btn-outline-danger btn-sm"  onClick={(event)=>dispatch(vote(postOrComment.id,'downVote',type))}><MdKeyboardArrowDown/></button>
         {isVoting &&
         <Loading delay={200} type='spin' color='#222' className='loading' />
         }

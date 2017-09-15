@@ -1,86 +1,7 @@
-import {ADD_RECIPE,REMOVE_FROM_CALENDAR,RECEIVE_FOOD,FETCHING_CATEGORIES,RECEIVED_CATEGORIES,RECEIVED_POSTS,
+import {FETCHING_CATEGORIES,RECEIVED_CATEGORIES,RECEIVED_POSTS,
   FETCHING_POSTS,VOTING,VOTED,RECEIVED_COMMENTS,ORDER_BY,ORDER_BY_COMMENTS,EDIT_MODE,SAVING_POST,SAVED_POST,
-SAVING_COMMENT,SAVED_COMMENT,DELETED_POST,JUST_SAVED_FALSE} from '../actions'
+SAVING_COMMENT,SAVED_COMMENT,DELETED_POST,JUST_SAVED_FALSE,EDIT_COMMENT,DELETED_COMMENT} from '../actions'
 import {combineReducers} from 'redux';
-
-const initialCalendarState = {
-  sunday: {
-    breakfast: null,
-    lunch: null,
-    dinner: null,
-  },
-  monday: {
-    breakfast: null,
-    lunch: null,
-    dinner: null,
-  },
-  tuesday: {
-    breakfast: null,
-    lunch: null,
-    dinner: null,
-  },
-  wednesday: {
-    breakfast: null,
-    lunch: null,
-    dinner: null,
-  },
-  thursday: {
-    breakfast: null,
-    lunch: null,
-    dinner: null,
-  },
-  friday: {
-    breakfast: null,
-    lunch: null,
-    dinner: null,
-  },
-  saturday: {
-    breakfast: null,
-    lunch: null,
-    dinner: null,
-  },
-}
-const food = (state = {},action) => {
-  switch(action.type)
-  {
-    case ADD_RECIPE:
-      return {
-        ...state,
-        [action.recipe.label]:action.recipe
-      }
-      case RECEIVE_FOOD:
-        return {
-          ...state,
-          food:action.food
-        }
-    default:
-      return state;
-  }
-}
-
-const calendar = (state = initialCalendarState,action)=>{
-  const {day,recipe,meal} = action;
-  switch (action.type) {
-    case ADD_RECIPE:
-      return {
-        ...state,
-        [day]:{
-          ...state[day],
-          [meal]:recipe.label
-        }
-      }
-    case REMOVE_FROM_CALENDAR:
-      return {
-        ...state,
-        [day]:{
-          ...state[day],
-          [meal]:null
-        }
-      }
-    default:
-      return state;
-  }
-}
 
 const categories = (state = {isFetchingCategories:false,entries:[],selected_category:''},action) =>{
   switch (action.type){
@@ -89,7 +10,6 @@ const categories = (state = {isFetchingCategories:false,entries:[],selected_cate
         ...state,
         isFetchingCategories:true
       }
-      break;
     case RECEIVED_CATEGORIES:
       return {
         ...state,
@@ -108,7 +28,6 @@ const posts = (state = {posts : []},action) => {
         ...state,
         isFetchingPosts:true
       }
-      break;
     case RECEIVED_POSTS:
       return {
         ...state,
@@ -121,9 +40,17 @@ const posts = (state = {posts : []},action) => {
         isVoting:true
       }
     case VOTED:
-      return {
+      return action.dataType==="posts"?{
         ...state,
-        posts:state.posts.map((elem)=>action.post && action.post.id == elem.id ? action.post:elem),
+        posts:state.posts.map((elem)=>action.postOrComment && action.postOrComment.id === elem.id ? action.postOrComment:elem),
+        isVoting:false
+      }:{
+        ...state,
+        comments:{
+          ...state.comments,
+          [action.postOrComment.parentId]:
+            state.comments[action.postOrComment.parentId].map(element=>element.id===action.postOrComment.id?action.postOrComment:element)
+        },
         isVoting:false
       }
     case ORDER_BY:
@@ -134,13 +61,18 @@ const posts = (state = {posts : []},action) => {
       case ORDER_BY_COMMENTS:
       return {
         ...state,
-        orderByComments:action.orderBy
+        commentsOrderBy:action.orderBy
       }
       case EDIT_MODE:
         return {
           ...state,
           editMode:action.editMode
         }
+    case EDIT_COMMENT:
+    return {
+      ...state,
+      commentToEdit:action.id
+    }
     case SAVING_POST:
       return {
         ...state,
@@ -156,10 +88,21 @@ const posts = (state = {posts : []},action) => {
           ...state,
           justSavedPost:null
         }
+        case DELETED_COMMENT:
+        {
+          return {
+            ...state,
+            comments:{
+              ...state.comments,
+              [action.commentInfo.parentId]:
+                state.comments[action.commentInfo.parentId].map(element=>element.id===action.commentInfo.id?{...element,deleted:true}:element)
+            }
+          }
+      }
       case SAVED_POST:
       let statePosts = state.posts;
       statePosts.forEach((elem,index)=>{
-        if(elem.id==action.post.id)
+        if(elem.id===action.post.id)
         {
           statePosts.splice(index);
           return false;
@@ -178,21 +121,18 @@ const posts = (state = {posts : []},action) => {
             ...state,
             savingPost:false,
             editMode:false,
-            posts:state.posts.map(element=>element.id==action.postId?{...element,deleted:true}:element),
+            posts:state.posts.map(element=>element.id===action.postId?{...element,deleted:true}:element),
           };
     case SAVED_COMMENT:
       let statePostComments = (state.comments && state.comments[action.comment.parentId]) || [];
-      statePostComments.forEach((elem,index)=>{
-        if(elem.id==action.comment.id)
-        {
-          statePostComments.splice(index);
-          return false;
-        }
-      });
+      statePostComments=statePostComments.filter((elem,index)=>(
+        elem.id!=action.comment.id
+      ));
       statePostComments = statePostComments.concat(action.comment);
       return {
         ...state,
         savingComment:false,
+        commentToEdit:null,
         comments:{
           ...state.comments,
           [action.comment.parentId]:statePostComments
@@ -219,8 +159,6 @@ const posts = (state = {posts : []},action) => {
 }
 
 export default combineReducers({
-  calendar,
-  food,
   categories,
   posts
 }

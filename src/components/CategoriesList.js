@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import {fetchCategories} from '../actions'
 import {connect} from 'react-redux';
 import Loading from 'react-loading'
@@ -13,16 +12,17 @@ class CategoriesList extends Component {
   }
 
   render () {
-    const {isFetchingCategories,entries} = this.props;
+    const {isFetchingCategories,entries,selectedCategory} = this.props;
     return (
       <div>
+        <h3>Categories:</h3>
       {isFetchingCategories === true
            ? <Loading delay={200} type='spin' color='#222' className='loading' />
          :
-          <ul>
+          <ul className="nav">
             {entries.map((entry,index)=>(
-              <li key={`link_${index}`}>
-                <Link to={`/${entry.path}`} className="close-search">{entry.name}</Link>
+              <li className="nav-item" key={`link_${index}`}>
+                <Link className={"nav-link"+(entry.path===selectedCategory?" active":"")} to={`/${entry.path}`}>{entry.name}</Link>
               </li>
             ))}
           </ul>

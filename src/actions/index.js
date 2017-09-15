@@ -1,4 +1,4 @@
-import {getCategories,getPosts,postVote,getComments,serverSavePost,serverSaveComment} from '../utils/api'
+import {getCategories,getPosts,postOrCommentVote,getComments,serverSavePost,serverSaveComment} from '../utils/api'
 export const ADD_RECIPE = 'ADD_RECIPE'
 export const REMOVE_FROM_CALENDAR = 'REMOVE_FROM_CALENDAR'
 export const RECEIVE_FOOD = 'RECEIVE_FOOD'
@@ -16,30 +16,10 @@ export const SAVING_POST = "SAVING_POST"
 export const SAVED_POST = "SAVED_POST";
 export const SAVING_COMMENT = "SAVING_COMMENT";
 export const SAVED_COMMENT = "SAVED_COMMENT";
+export const EDIT_COMMENT = "EDIT_COMMENT";
 export const DELETED_POST = "DELETED_POST";
 export const JUST_SAVED_FALSE = "JUST_SAVED_FALSE";
-
-
-
-
-
-
-export function addRecipe ({ day, recipe, meal }) {
-  return {
-    type: ADD_RECIPE,
-    recipe,
-    day,
-    meal,
-  }
-}
-
-export function removeFromCalendar ({ day, meal }) {
-  return {
-    type: REMOVE_FROM_CALENDAR,
-    day,
-    meal,
-  }
-}
+export const DELETED_COMMENT = "DELETED_COMMENT";
 
 export const savingPost = () => ({
   type:SAVING_POST
@@ -70,20 +50,30 @@ const savingComment = () => ({
   type: SAVING_COMMENT
 })
 
+export const editComment = (id) => ({
+  type:EDIT_COMMENT,
+  id
+})
+
 const savedComment = (comment) => ({
   type: SAVED_COMMENT,
   comment
 })
 
+export const deletedComment = (commentInfo) =>({
+  type:DELETED_COMMENT,
+  commentInfo
+})
+
 export const saveComment = (values) => dispatch => {
     dispatch(savingComment());
-    serverSaveComment(values).then((comment)=>dispatch(savedComment(comment)));
+    serverSaveComment(values).then((comment)=>{
+      if(values.action=="deleteAction")
+        dispatch(deletedComment(comment));
+      else
+        dispatch(savedComment(comment));
+    });
 }
-
-export const receiveFood = food => ({
-  type: RECEIVE_FOOD,
-  food
-});
 
 export const fetchingCategories = () => ({
   type: FETCHING_CATEGORIES
@@ -117,7 +107,6 @@ export const fetchPosts = (category) => dispatch => {
   getPosts(category).then(posts=>dispatch(receivedPosts(posts)));
 }
 
-
 export const receivedComments = (comments) => ({
   type:RECEIVED_COMMENTS,
   comments
@@ -133,9 +122,10 @@ export const voting = () => (
   }
 )
 
-export const voted = (post) => ({
+export const voted = (postOrComment,dataType) => ({
   type: VOTED,
-  post
+  postOrComment,
+  dataType
 })
 
 export const orderBy = (orderBy) => ({
@@ -154,7 +144,7 @@ export const editMode = (editMode) => {
   editMode}
 }
 
-export const vote = (postId,voteDirection) => dispatch => {
+export const vote = (postOrCommentId,voteDirection,type) => dispatch => {
   dispatch(voting());
-  postVote(postId,voteDirection).then((post)=>dispatch(voted(post)))
+  postOrCommentVote(postOrCommentId,voteDirection,type).then((postOrComment)=>dispatch(voted(postOrComment,type)))
 }

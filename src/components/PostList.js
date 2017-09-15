@@ -1,12 +1,10 @@
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import Loading from 'react-loading'
 import {Link} from 'react-router-dom'
 import Post from './Post'
 import {orderBy} from '../actions'
 import sortBy from 'sort-by'
-import {editMode,fetchCategories} from '../actions'
+import MdAdd from 'react-icons/lib/md/add'
 
 /*
 **
@@ -14,22 +12,26 @@ import {editMode,fetchCategories} from '../actions'
 */
 class PostList extends Component {
 
-  componentDidMount () {
-  }
-
   render () {
     const {posts,dispatch,postsOrderBy} = this.props;
     return (
-      <div>
-        <label>
-          <input type="radio" name="orderBy" onClick={event=>dispatch(orderBy("timestamp"))} />Order by date
-        </label>
-        <label>
-          <input type="radio" name="orderBy" onClick={event=>dispatch(orderBy("voteScore"))} />Order by score
-        </label>
-        <Link to={`/posts/new_post`}>Add Post</Link>
-        <ul>
-          {posts.filter((element,index)=>!element.deleted).sort(sortBy(postsOrderBy)).map(post=>(
+      <div className="col-xs-12">
+        <h3>Posts</h3>
+        <div className="row">
+          <div className="radio form-group col-xs-6 col-sm-4">
+            <label>
+              <input type="radio"  defaultChecked={postsOrderBy=="voteScore"} name="orderBy" onClick={event=>dispatch(orderBy("voteScore"))} />Order by score
+            </label>
+          </div>
+          <div className="radio form-group col-xs-6 col-sm-4">
+            <label>
+              <input type="radio" defaultChecked={postsOrderBy=="timestamp"} name="orderBy" onClick={event=>dispatch(orderBy("timestamp"))} />Order by date
+            </label>
+          </div>
+        </div>
+        <Link to={`/posts/new_post`}><MdAdd/>Add Post</Link>
+        <ul className="list-unstyled post">
+          {posts.filter((element,index)=>!element.deleted).sort(sortBy(`-${postsOrderBy}`)).map(post=>(
             <li key={`post_${post.id}`}>
               <Post post_id={post.id} showlistview={true}/>
             </li>

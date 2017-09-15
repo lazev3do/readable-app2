@@ -33,8 +33,8 @@ export const getCategories = () =>
           .catch(e => e)
         }
 
-      export const postVote = (postId, voteDirection) =>
-        fetch(`${api}/posts/${postId}`, {
+      export const postOrCommentVote = (postOrCommentId, voteDirection,type) =>
+        fetch(`${api}/${type}/${postOrCommentId}`, {
           method: 'POST',
           headers: {
             ...headers,
@@ -74,6 +74,8 @@ export const getCategories = () =>
       url+=`/${values.id}`;
       method="PUT";
     }
+    if(values.action=="deleteAction")
+      method="DELETE";
     return (
     fetch(url, {
       method,
@@ -82,7 +84,7 @@ export const getCategories = () =>
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values)
-    }).then(res => res.json())
+    }).then(res => values.action!="deleteAction"?res.json():{id:values.id,parentId:values.parentId})
       .then(data => data))
     }
 

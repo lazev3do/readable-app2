@@ -11,6 +11,7 @@ import serializeForm from 'form-serialize'
 import {editMode,fetchCategories,savePost,justSavedFalse} from '../actions'
 import {guid} from '../utils/helper'
 import { Route, withRouter } from 'react-router-dom';
+import MdEdit from 'react-icons/lib/md/edit'
 
 /*
 **
@@ -19,6 +20,7 @@ import { Route, withRouter } from 'react-router-dom';
 class Post extends Component {
 
   componentDidMount () {
+    this.props.dispatch(fetchCategories());
     if(this.props.post_id && this.props.post_id=="new_post")
       this.editModeTrue();
     else if(this.props.post!== undefined)
@@ -34,10 +36,11 @@ class Post extends Component {
       values.id = guid();
     }
     this.props.dispatch(savePost(values));
+    e.target.reset();
   }
 
   componentWillReceiveProps(newProps) {
-    if(newProps.justSavedPost && this.props.post_id && this.props.post_id=="new_post")
+    if(newProps.justSavedPost)
     {
       this.props.history.push(`/${newProps.justSavedPost.category}/${newProps.justSavedPost.id}`);
       this.props.dispatch(justSavedFalse());
@@ -47,36 +50,47 @@ class Post extends Component {
   }
 
   editModeTrue = () => {
-    this.props.dispatch(fetchCategories());
     this.props.dispatch(editMode(true));
   }
 
   render () {
     const {post,showlistview,comments,editMode,categories,dispatch,savingPost,post_id,isFetchingPosts,link_category} = this.props;
-    console.log("Post:");
-    console.log(post);
     return (
       <div>
         {editMode && (post === undefined || !post.deleted) ?
-          <div>
-            <form noValidate onSubmit={this.handleSubmit}>
-              <input type="text" required name="title" placeholder="Title" defaultValue={(post && post.title)|| ""} />
-              <textarea defaultValue={(post && post.body)|| ""} name="body" required placeholder="body"></textarea>
-              <input type="text" required name="author" defaultValue={(post && post.author)|| ""} placeholder="author" />
-              <select defaultValue={post && post.category || ""} required name="category">
-                {categories && categories.map(element=>
-                  element.name!=="All" &&
-                  <option key={element.path} value={element.path}>{element.name}</option>
-                )}
-              </select>
+          <div className="post-form">
+            <h3>Edit Post</h3>
+            <form onSubmit={this.handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="title">Title</label>
+                <input type="text" className="form-control" id="title" required name="title" placeholder="Title" defaultValue={(post && post.title)|| ""} />
+              </div>
+              <div className="form-group">
+                <label htmlFor="post_body">Post:</label>
+                <textarea className="form-control" id="post_body" defaultValue={(post && post.body)|| ""} name="body" required placeholder="body"></textarea>
+              </div>
+              <div className="form-group">
+                <label htmlFor="post_author">Author</label>
+                <input className="form-control" id="post_author" type="text" required name="author" defaultValue={(post && post.author)|| ""} placeholder="author" />
+              </div>
+              <div className="form-group">
+                <label htmlFor="post_category">Category:</label>
+                <select className="form-control" id="post_category" defaultValue={post && post.category || ""} required name="category">
+                  {categories && categories.map(element=>
+                    element.name!=="All" &&
+                    <option key={element.path} value={element.path}>{element.name}</option>
+                  )}
+                </select>
+              </div>
               {post && post.id ? <input type="hidden" defaultValue={post.id} name="id" />:""}
               {savingPost?
                 <Loading delay={200} type='spin' color='#222' className='loading' />
                 :
                 <div>
                   <input type="hidden" defaultValue="saveAction" name="action" ref={(input)=>this.actionInput=input} />
-                  <input formNoValidate type="Submit" defaultValue="Save" onClick={()=>{this.actionInput.value="saveAction";return true;}} />
-                  {post !== undefined && <input formNoValidate type="Submit" defaultValue="Delete" onClick={()=>{this.actionInput.value="deleteAction";return true;}} />}
+                  <input type="Submit" className="btn btn-primary btn-small" defaultValue="Save" onClick={()=>{this.actionInput.value="saveAction";return true;}} />
+                  {post !== undefined && <input className="btn btn-danger btn-small" formNoValidate type="Submit" defaultValue="Delete" onClick={()=>{this.actionInput.value="deleteAction";return true;}} />}
+                  <Link to={post?`/${post.category}/${post.id}`:"/"}>Cancel</Link>
                 </div>
               }
             </form>
@@ -85,25 +99,42 @@ class Post extends Component {
 
       post !== undefined && !post.deleted ?
        showlistview &&
-        <div>
-          <Link to={`/${post.category}/${post.id}`}><p>{post.title}</p></Link>
-          {comments && comments[post.id] ?
-          <span>{comments[post.id].length} comments</span>
-          :<span>0 comments</span>
-          }
+        <div className="row">
+          <div className="col">
+            <Link to={`/${post.category}/${post.id}`}><h4 style={{display:"inline-block"}}>{post.title}</h4></Link> by <span>{`${post.author}`}</span><br/>
+            {comments && comments[post.id] ?
+            <span>{comments[post.id].reduce((counter,elem)=>counter+=!elem.deleted,0)} comments</span>
+            :<span>0 comments</span>
+            }
+            <div className="row align-items-center">
+              <div className="col">
+              <Voting postOrComment = {post} type="posts" />
+              </div>
+              <div className="col">
+              <Link className="pull-right" to={`/${post.category}/${post.id}?edit=true`}><MdEdit />Edit</Link>
+              </div>
+            </div>
+          </div>
       </div>
       ||
       /** post view **/
       <div>
-        <Link to={`/${post.category}`}>{post.category}</Link>
-        <span>{post.title}</span><Link to={`/${post.category}/${post.id}?edit=true`}>Edit</Link>
-        <Voting post = {post} />
+        <Link to={`/${post.category}`}>{post.category}</Link><br/>
+        <h4 style={{display:"inline-block",marginRight:"10px"}}>{post.title}</h4><Link to={`/${post.category}/${post.id}?edit=true`}><MdEdit />Edit</Link>
+        <blockquote className="blockquote">
+          <p className="mb-0">{post.body}</p>
+        </blockquote>
+        <p>{post.author}</p>
+        <Voting postOrComment = {post} type="posts" />
         <CommentForm postId={post.id}/>
-        {comments && comments[post.id] &&
-        <div className="comments-list">
-          <span>{comments[post.id].length} comments</span>
-          <CommentsList postId={post.id}/>
+        {comments && comments[post.id] ?
+        <div>
+          <span>{comments[post.id].reduce((counter,elem)=>counter+=!elem.deleted,0)} comments</span>
+          <div className="comments-list">
+            <CommentsList postId={post.id}/>
+          </div>
         </div>
+        :<span>0 comments</span>
         }
       </div>
       : (isFetchingPosts ? <Loading delay={200} type='spin' color='#222' className='loading' />:
