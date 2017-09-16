@@ -40,6 +40,8 @@ class Post extends Component {
   }
 
   componentWillReceiveProps(newProps) {
+    if(this.props.post_id && this.props.post_id=="new_post")
+      this.editModeTrue();
     if(newProps.justSavedPost)
     {
       this.props.history.push(`/${newProps.justSavedPost.category}/${newProps.justSavedPost.id}`);
