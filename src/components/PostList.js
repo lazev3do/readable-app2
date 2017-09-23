@@ -29,7 +29,7 @@ class PostList extends Component {
             </label>
           </div>
         </div>
-        <Link to={`/posts/new_post`}><MdAdd/>Add Post</Link>
+        <Link className="btn btn-sm btn-primary" to={`/posts/new_post`}><MdAdd/>Add Post</Link>
         <ul className="list-unstyled post">
           {posts.filter((element,index)=>!element.deleted).sort(sortBy(`-${postsOrderBy}`)).map(post=>(
             <li key={`post_${post.id}`}>
