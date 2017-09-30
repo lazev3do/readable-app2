@@ -11,7 +11,6 @@ import MdAdd from 'react-icons/lib/md/add'
  title, author, number of comments, current score, and a voting mechanism to upvote or downvote the post. Posts should have buttons or links for editing or deleting that post.
 */
 class PostList extends Component {
-
   render () {
     const {posts,dispatch,postsOrderBy} = this.props;
     return (

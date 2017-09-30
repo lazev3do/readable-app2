@@ -12,6 +12,7 @@ import {editMode,fetchCategories,savePost,justSavedFalse} from '../actions'
 import {guid} from '../utils/helper'
 import { Route, withRouter } from 'react-router-dom';
 import MdEdit from 'react-icons/lib/md/edit'
+import MdDelete from 'react-icons/lib/md/delete'
 
 /*
 **
@@ -49,6 +50,15 @@ class Post extends Component {
     }
     if(this.props.post==undefined && newProps.post!==undefined)
       this.props.dispatch(fetchComments(newProps.post.id));
+  }
+
+  deletePost = (post_id) => {
+    let values = {
+      action:"deleteAction",
+      existing_post:true,
+      id:post_id
+    }
+    this.props.dispatch(savePost(values));
   }
 
   editModeTrue = () => {
@@ -114,6 +124,7 @@ class Post extends Component {
               </div>
               <div className="col">
               <Link className="pull-right" to={`/${post.category}/${post.id}?edit=true`}><MdEdit />Edit</Link>
+              <button className="pull-right btn btn-small btn-danger" style={{marginLeft:"10px"}} onClick={(event)=>{this.deletePost(post.id)}}><MdDelete />Delete</button>
               </div>
             </div>
           </div>
